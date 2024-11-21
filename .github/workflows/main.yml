@@ -32,7 +32,7 @@ jobs:
         uses: 'azure/aci-deploy@v1'
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ secrets.RESOURCE_GROUP }}
+          dns-name-label: ${{ github.repository }}-${{ github.run_number }} # Dynamic DNS label using repo name and run number
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
