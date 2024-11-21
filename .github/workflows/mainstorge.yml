@@ -1,10 +1,12 @@
-name: GettingStarted_Container_Workflow
+name: Fetch Data and Save to Azure File Share
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
-  build-deploy-store:
+  fetch-and-save-data:
     runs-on: ubuntu-latest
 
     steps:
@@ -12,45 +14,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Azure CLI
+      # Step 2: Log in to Azure CLI using Service Principal (credentials)
       - name: Login to Azure CLI
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 3: Log in to Azure Container Registry
-      - name: Login to Azure Container Registry
+      # Step 3: Fetch the data from the website (e.g., using curl)
+      - name: Fetch data from website
         run: |
-          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login ${{ secrets.REGISTRY_LOGIN_SERVER }} \
-          --username ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-
-      # Step 4: Build and push the Docker image
-      - name: Build and push Docker image
-        run: |
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-
-      # Step 5: Deploy to Azure Container Instances
-      - name: Deploy to Azure Container Instances
-        uses: azure/aci-deploy@v1
-        with:
-          resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ secrets.REPOSITORY_NAME }}-${{ github.run_number }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
-          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          registry-username: ${{ secrets.REGISTRY_USERNAME }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: getting-started-github
-          location: 'northeurope'
-          ports: '3000'
-
-      # Step 6: Mount the Azure File Share
-      - name: Mount Azure File Share
-        run: |
-          sudo mkdir /mnt/azure
-          sudo mount -t cifs //${{ secrets.AZURE_STORAGE_ACCOUNT }}.${{ secrets.AZURE_STORAGE_ENDPOINT_SUFFIX }}/${{ secrets.AZURE_FILE_SHARE_NAME }} /mnt/azure -o vers=3.0,username=${{ secrets.AZURE_STORAGE_ACCOUNT }},password=${{ secrets.AZURE_STORAGE_KEY }},dir_mode=0777,file_mode=0777
-
-      # Step 7: Upload data to Azure File Share
+          curl -o fetched_data.txt "https://example.com/api/data"  # Replace with your actual URL
+          
+      # Step 4: Upload fetched data to Azure File Share
       - name: Upload data to Azure File Share
         run: |
-          cp ./path/to/your/data/file.txt /mnt/azure/file.txt
+          az storage file upload \
+            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+            --account-key ${{ secrets.AZURE_STORAGE_KEY }} \
+            --share-name ${{ secrets.AZURE_FILE_SHARE_NAME }} \
+            --source ./fetched_data.txt \
+            --path fetched_data_${{ github.run_number }}.txt
