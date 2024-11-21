@@ -1,7 +1,7 @@
 on:
-  push: # Triggers the workflow on any push to the repository
+  push:
     branches:
-      - main # Specify the branch name you want to trigger on (e.g., 'main')
+      - main
 
 name: GettingStarted_Container_Workflow
 
@@ -32,7 +32,8 @@ jobs:
         uses: 'azure/aci-deploy@v1'
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ github.repository }}-${{ github.run_number }} # Dynamic DNS label using repo name and run number
+          # Create a valid DNS name label
+          dns-name-label: getting-started-${{ github.run_number }}-${{ github.repository_owner | tolower() }}
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
