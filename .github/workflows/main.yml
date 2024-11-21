@@ -29,11 +29,11 @@ jobs:
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
 
       - name: 'Deploy to Azure Container Instances'
-        uses: azure/aci-deploy@v1
+        uses: 'azure/aci-deploy@v1'
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
-          # Ensure the DNS name label follows Azure rules
-          dns-name-label: getting-started-${{ github.run_number }}-${{ github.repository_owner | tolower() | replace('_', '-') }}
+          # Create a valid DNS name label
+          dns-name-label: getting-started-${{ github.run_number }}-${{ github.repository_owner | tolower() }}
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
