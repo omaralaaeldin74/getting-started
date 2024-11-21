@@ -110,6 +110,6 @@ jobs:
 
           name: getting-started-github
 
-          location: 'westeurope'
+          location: 'northeurope'
 
           ports: '3000'
