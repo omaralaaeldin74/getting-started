@@ -1,0 +1,41 @@
+name: GettingStarted_Container_Workflow
+ 
+on: [push]
+ 
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Stap 1: Checkout de repository
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v3
+ 
+      # Stap 2: Log in bij Azure via Service Principal
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+ 
+      # Stap 3: Log in bij Azure Container Registry
+      - name: 'Login to Azure Container Registry'
+        run: |
+          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login ${{ secrets.REGISTRY_LOGIN_SERVER }} \
+          --username ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+ 
+      # Stap 4: Build en push het Docker-image
+      - name: 'Build and push image'
+        run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
+ 
+      # Stap 5: Deploy naar Azure Container Instances met een dynamische DNS-naam
+      - name: 'Deploy to Azure Container Instances'
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          dns-name-label: ${{ secrets.REPOSITORY_NAME }}-${{ github.run_number }}
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.run_number }}
+          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          name: getting-started-github
